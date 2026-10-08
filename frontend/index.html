@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registratore Vocale</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #2e005b, #3e0b68, #59154a, #3c1d57);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    img.logo {
+      width: 200px;
+      margin-bottom: -20px;
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 40px;
+    }
+
+    .record-button,
+    .retry-button,
+    .send-button {
+      padding: 15px 35px;
+      font-size: 18px;
+      border: 2px solid white;
+      border-radius: 50px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      transition: border-width 0.2s, transform 0.2s;
+      margin: 10px;
+    }
+
+    .record-button:hover,
+    .retry-button:hover,
+    .send-button:hover {
+      border-width: 3px;
+      transform: scale(1.05);
+    }
+
+    .record-button:disabled,
+    .retry-button:disabled,
+    .send-button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      border-color: #aaa;
+      color: #ccc;
+    }
+
+    .button-group {
+      display: none;
+      flex-direction: row;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .loading {
+      margin-top: 30px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+      font-size: 16px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    #loading-text {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .rotating-logo {
+      width: 60px;
+      height: 60px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    audio {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <img src="logo.png" alt="Logo Hindeep" class="logo">
+  <h1>Registratore Vocale</h1>
+
+  <button class="record-button">Inizia Registrazione</button>
+
+  <div class="button-group">
+    <button class="retry-button">Riprova</button>
+    <button class="send-button">Invia</button>
+  </div>
+
+  <div class="loading">
+    <div id="loading-text"><strong>Processo in corso...</strong></div>
+    <img src="logo.png" alt="Logo che gira" class="rotating-logo">
+  </div>
+
+  <audio controls></audio>
+
+  <script>
+    let mediaRecorder, audioChunks = [], audioBlob, isRecording = false;
+    let messageIndex = 0, rotateTimeout = null;
+
+    const recordButton = document.querySelector('.record-button');
+    const retryButton = document.querySelector('.retry-button');
+    const sendButton = document.querySelector('.send-button');
+    const buttonGroup = document.querySelector('.button-group');
+    const audioPlayer = document.querySelector('audio');
+    const loadingDiv = document.querySelector('.loading');
+    const loadingText = document.getElementById('loading-text');
+
+    const loadingMessages = [
+      "✨ <strong>Stiamo cercando chi ti capisce davvero...</strong>",
+      "🎙️ <strong>Analizziamo la tua voce del cuore...</strong>",
+      "❤️ <strong>Un algoritmo non può amare, ma può aiutarti a trovare chi può...</strong>",
+      "💓 <strong>I battiti si stanno sincronizzando...</strong>",
+      "🧠 <strong>Stiamo trovando chi parla la tua stessa lingua emotiva...</strong>",
+      "🕸️ <strong>Tessiamo connessioni autentiche...</strong>",
+      "🌟 <strong>Prepara il cuore... qualcosa di bello sta arrivando...</strong>"
+    ];
+
+    function changeMessage() {
+      loadingText.innerHTML = loadingMessages[messageIndex];
+      messageIndex = (messageIndex + 1) % loadingMessages.length;
+      rotateTimeout = setTimeout(changeMessage, 10000);
+    }
+
+    function startLoadingMessages() {
+      clearTimeout(rotateTimeout);
+      messageIndex = 0;
+      changeMessage();
+    }
+
+    function stopLoadingMessages() {
+      clearTimeout(rotateTimeout);
+      rotateTimeout = null;
+    }
+
+    recordButton.addEventListener('click', async () => {
+      if (!isRecording) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
+        mediaRecorder.addEventListener('stop', () => {
+          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          audioPlayer.src = URL.createObjectURL(audioBlob);
+          recordButton.style.display = 'none';
+          buttonGroup.style.display = 'flex';
+        });
+        mediaRecorder.start();
+        isRecording = true;
+        recordButton.textContent = 'Ferma Registrazione';
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordButton.textContent = 'Inizia Registrazione';
+      }
+    });
+
+    retryButton.addEventListener('click', () => {
+      stopLoadingMessages();
+      audioPlayer.src = '';
+      buttonGroup.style.display = 'none';
+      recordButton.style.display = 'inline-block';
+      recordButton.textContent = 'Inizia Registrazione';
+      loadingDiv.style.display = 'none';
+      sendButton.disabled = false;
+    });
+
+    sendButton.addEventListener('click', () => {
+      buttonGroup.style.display = 'none';
+      recordButton.style.display = 'none';
+      loadingDiv.style.display = 'flex';
+      sendButton.disabled = true;
+      startLoadingMessages();
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        fetch("https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/default/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audio: base64 })
+        })
+          .then(res => console.log("✅ API risposta ricevuta"))
+          .catch(e => console.error("❌ Errore API", e));
+      };
+      reader.readAsDataURL(audioBlob);
+    });
+  </script>
+</body>
+
+</html>

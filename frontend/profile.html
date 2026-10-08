@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compila il tuo Profilo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #2e005b, #3e0b68, #59154a, #3c1d57);
+      background-size: 800% 800%;
+      animation: gradientShift 15s ease infinite;
+      color: white;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
+      min-height: 100vh;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .background-logo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.12;
+      width: 1200px;
+      max-width: none;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 90%;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+
+    .button-card {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .button-card button {
+      padding: 12px 30px;
+      font-size: 18px;
+      border: 2px solid white;
+      border-radius: 50px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .button-card button:hover {
+      border-width: 3px;
+      transform: scale(1.05);
+    }
+
+    .loader {
+      margin-top: 15px;
+      color: #ffee77;
+      font-style: italic;
+    }
+
+    .error-message {
+      color: #ff7777;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .form-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 30px 40px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #ffddff;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    select {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    select option {
+      background-color: white;
+      color: black;
+    }
+
+    button.submit-btn {
+      margin-top: 25px;
+      padding: 12px 30px;
+      font-size: 18px;
+      border: 2px solid white;
+      border-radius: 50px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      width: 100%;
+    }
+
+    button.submit-btn:hover {
+      border-width: 3px;
+      transform: scale(1.05);
+    }
+
+    .chart-container {
+      margin: 50px auto;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: none;
+      backdrop-filter: blur(10px);
+    }
+
+    input[type=range] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      transition: background 0.3s;
+      margin-top: 5px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffddff;
+      cursor: pointer;
+      box-shadow: 0 0 5px #fff;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffddff;
+      cursor: pointer;
+      box-shadow: 0 0 5px #fff;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <img src="logo.png" alt="Logo in sfondo" class="background-logo">
+
+  <div class="container">
+
+    <div class="button-card">
+      <button id="loadProfileBtn">Carica Profilo</button>
+      <div id="loader" class="loader" style="display:none;">Caricamento in corso…</div>
+      <div id="errorMsg" class="error-message" style="display:none;"></div>
+    </div>
+
+    <form class="form-card" id="profileForm">
+      <h1>Compila il tuo Profilo</h1>
+
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" name="nome" placeholder="Es. Luca" />
+
+      <label for="eta">Età</label>
+      <input type="number" id="eta" name="eta" min="18" max="99" placeholder="Es. 28" />
+
+      <label for="genere">Genere</label>
+      <select id="genere" name="genere">
+        <option value="">Seleziona...</option>
+        <option value="Uomo">Uomo</option>
+        <option value="Donna">Donna</option>
+        <option value="Non binario">Non binario</option>
+      </select>
+
+      <label for="citta">Città</label>
+      <input type="text" id="citta" name="citta" placeholder="Es. Milano" />
+
+      <label for="altezza">Altezza</label>
+      <input type="text" id="altezza" name="altezza" placeholder="Es. 1.75" />
+
+      <label for="professione">Professione</label>
+      <input type="text" id="professione" name="professione" placeholder="Es. Ingegnere" />
+
+      <label for="hobby">Hobby</label>
+      <textarea id="hobby" name="hobby" rows="2" placeholder="Es. Cinema, sport, cucina, trekking"></textarea>
+
+      <label for="partner">Tipo di partner cercato</label>
+      <select id="partner" name="partner">
+        <option value="">Seleziona...</option>
+        <option value="Uomo">Uomo</option>
+        <option value="Donna">Donna</option>
+        <option value="Non binario">Non binario</option>
+        <option value="Chiunque">Aperto a chiunque</option>
+      </select>
+
+      <label for="range">Età desiderata partner</label>
+      <input type="text" id="range" name="range" placeholder="Es. 25-35" />
+
+    </form>
+    <div class="form-card" style="margin-top: 20px;">
+      <h2 style="text-align:center; color: #ffddff;">Imposta la tua Personalità</h2>
+
+      <div>
+        <label for="altruista">Altruista</label>
+        <input type="range" min="0" max="3" step="1" value="0" id="altruista" oninput="updateRadarChart()" />
+      </div>
+
+      <div>
+        <label for="flessibile">Flessibile</label>
+        <input type="range" min="0" max="3" step="1" value="0" id="flessibile" oninput="updateRadarChart()" />
+      </div>
+
+      <div>
+        <label for="vulnerabile">Vulnerabile</label>
+        <input type="range" min="0" max="3" step="1" value="2" id="vulnerabile" oninput="updateRadarChart()" />
+      </div>
+
+      <div>
+        <label for="istintivo">Istintivə</label>
+        <input type="range" min="0" max="3" step="1" value="3" id="istintivo" oninput="updateRadarChart()" />
+      </div>
+
+      <div>
+        <label for="estroverso">Estroversə</label>
+        <input type="range" min="0" max="3" step="1" value="1" id="estroverso" oninput="updateRadarChart()" />
+      </div>
+    </div>
+
+
+    <script>
+      const apiUrl = "https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/YOUR_STAGE";
+
+      document.getElementById('loadProfileBtn').addEventListener('click', async () => {
+        const loader = document.getElementById('loader');
+        const errorMsg = document.getElementById('errorMsg');
+
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+        loader.style.display = 'block';
+
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error(`Errore HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          const profile = data.statusCode ? JSON.parse(data.body) : data;
+
+          document.getElementById('nome').value = profile.NOME || "";
+          document.getElementById('eta').value = profile.ETA || "";
+          document.getElementById('genere').value = normalizeSelectValue(profile.GENERE);
+          document.getElementById('citta').value = profile.CITTA || "";
+          document.getElementById('altezza').value = profile.ALTEZZA || "";
+          document.getElementById('professione').value = profile.PROFESSIONE || "";
+          document.getElementById('hobby').value = Array.isArray(profile.HOBBY) ? profile.HOBBY.join(", ") : "";
+          document.getElementById('partner').value = normalizeSelectValue(profile.INTERESSE);
+
+          const range = profile.RANGEETA;
+          if (range && range.min && range.max) {
+            document.getElementById('range').value = `${range.min}-${range.max}`;
+          }
+
+          // Added: update radar chart if personality levels are present
+          if (Array.isArray(profile.LIVELLI_PERS) && profile.LIVELLI_PERS.length === 5) {
+            // Update the sliders
+            document.getElementById('altruista').value = profile.LIVELLI_PERS[0];
+            document.getElementById('flessibile').value = profile.LIVELLI_PERS[1];
+            document.getElementById('vulnerabile').value = profile.LIVELLI_PERS[2];
+            document.getElementById('istintivo').value = profile.LIVELLI_PERS[3];
+            document.getElementById('estroverso').value = profile.LIVELLI_PERS[4];
+
+            // Then also update the radarChart
+            radarChart.data.datasets[0].data = profile.LIVELLI_PERS;
+            radarChart.update();
+          }
+
+        } catch (error) {
+          errorMsg.style.display = 'block';
+          errorMsg.textContent = "Errore: " + error.message;
+        } finally {
+          loader.style.display = 'none';
+        }
+      });
+
+      function normalizeSelectValue(val) {
+        if (!val) return "";
+        const options = Array.from(document.querySelectorAll('select option'));
+        const found = options.find(opt => opt.value.toLowerCase() === val.toLowerCase());
+        return found ? found.value : "";
+      }
+    </script>
+
+
+    <!-- Radar Chart -->
+    <div class="chart-container">
+      <h2 style="text-align: center; font-size: 22px; color: #ffddff; margin-bottom: 20px;">Radar della Personalità</h2>
+      <canvas id="radarChart" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      const radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Altruista', 'Flessibile', 'Vulnerabile', 'Istintivə', 'Estroversə'],
+          datasets: [{
+            label: 'Personalità',
+            data: [0, 0, 2, 3, 1],
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderColor: '#ffffff',
+            pointBackgroundColor: '#ffffff'
+          }]
+        },
+
+        options: {
+          responsive: true,
+          scales: {
+            r: {
+              min: 0,
+              max: 3,
+              ticks: {
+                stepSize: 1,
+                display: false,
+                backdropColor: 'transparent'
+              },
+              angleLines: { color: 'rgba(255,255,255,0.3)' },
+              grid: { color: 'rgba(255,255,255,0.2)' },
+              pointLabels: { color: '#ffffff' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#ffffff'
+              }
+            }
+          }
+        }
+      });
+    </script>
+
+    <script>
+      function updateRadarChart() {
+        const values = [
+          parseInt(document.getElementById('altruista').value),
+          parseInt(document.getElementById('flessibile').value),
+          parseInt(document.getElementById('vulnerabile').value),
+          parseInt(document.getElementById('istintivo').value),
+          parseInt(document.getElementById('estroverso').value)
+        ];
+        radarChart.data.datasets[0].data = values;
+        radarChart.update();
+      }
+    </script>
+
+
+</body>
+
+</html>

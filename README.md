@@ -18,6 +18,7 @@ The video demonstrates the recorded prototype: voice recording, audio submission
 
 🔊 **Enable audio for the full demonstration.**
 
+https://github.com/user-attachments/assets/e41ca2cb-ba13-4ea9-b215-e5d4ed8bb0dd
 
 ---
 
